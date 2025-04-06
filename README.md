@@ -13,7 +13,7 @@ A clean, cross-platform Python GUI app bootstrapper using **PySide6** and **uv**
     # or pipx install uv
     ```
     See the [official uv documentation](https://github.com/astral-sh/uv#installation) for more ways to install.
-    
+
 ## 🧰 Features
 
 - Python `3.11` virtual environment with `uv`
@@ -101,3 +101,17 @@ If you're just testing the GUI, set `UV_APP_DRY=1` in your script or terminal. T
 - Add `.env` support for dynamic configuration
 
 ---
+<details>
+<summary><strong>About UV-App-Starter-Pack</strong></summary>
+
+This project was created to simplify the often tedious process of setting up a new Python GUI application, especially when targeting multiple operating systems (Windows, macOS, Linux) and dealing with dependencies that require specific system configurations (like PyTorch with different CUDA versions).
+
+**Core Goals:**
+
+*   **Rapid Setup:** Use `uv` for near-instantaneous virtual environment creation and dependency installation.
+*   **Cross-Platform:** Provide ready-to-use launcher scripts (`.bat`, `.ps1`, `.sh`) for a consistent experience everywhere.
+*   **Dependency Handling:** Demonstrate robust dependency management, including the conditional installation of PyTorch based on detected CUDA capabilities.
+*   **Clean Foundation:** Offer a minimal PySide6 GUI application stub that is easy to replace or build upon.
+
+Whether you're a beginner looking for an easy entry into GUI development or an experienced developer needing a reliable template for ML/AI or other complex applications, this starter pack aims to get you running faster.
+</details>

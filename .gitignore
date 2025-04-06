@@ -1,0 +1,85 @@
+# --- Python ---
+# Virtual environment created by uv/venv
+.venv/
+# Other common venv names (just in case)
+venv/
+env/
+.env/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*build/
+*develop-eggs/
+*dist/
+*downloads/
+*eggs/
+*.egg-info/
+*lib/
+*lib64/
+*parts/
+*sdist/
+*var/
+*wheels/
+*.egg
+# Installation logs
+pip-log.txt
+pip-delete-this-directory.txt
+# Installer logs
+install.log
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+# Type checker cache
+.mypy_cache/
+.pyre/
+.pytype/
+
+# --- IDE / Editor Files ---
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.komodoproject
+*~
+*.swp
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Environment Files ---
+# Never commit your actual environment variables!
+# Commit an example file instead (e.g., .env.example)
+.env
+*.env.*
+!*.env.example
+!*.env.template
+
+# --- Build Artifacts (e.g., PyInstaller) ---
+/dist/
+/build/
+*.spec
+
+# --- Logs ---
+*.log
+
+# --- Specific to this project (if needed) ---
+# e.g., downloaded models, datasets - consider Git LFS for large files
+# models/
+# data/
+
+# Test files
+test_*.py
+*_test.py
