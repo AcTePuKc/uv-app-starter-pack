@@ -4,76 +4,75 @@
 # Use --dry or set UV_APP_DRY=1 to skip actual install (for testing or CI).
 # ---------------------
 
+# install_torch.py (REVISED)
 import subprocess
 import sys
 import os
 
 def detect_cuda_version():
     try:
-        # Use nvidia-smi for broader compatibility if nvcc isn't installed everywhere
-        # Though nvcc is needed for *development*, nvidia-smi is often present with drivers
-        # Prioritize nvcc if available
+        # Try nvcc first
         try:
             output = subprocess.check_output(["nvcc", "--version"], text=True, stderr=subprocess.DEVNULL)
+            for line in output.splitlines():
+                if "release" in line:
+                    version_part = line.split("release")[-1].strip()
+                    major_minor = version_part.split(",")[0] # e.g., "12.1"
+                    return major_minor.replace(".", "") # "121"
+            return None # nvcc found but no version line? Unlikely.
         except FileNotFoundError:
-             # Fallback to nvidia-smi if nvcc not found
-             output = subprocess.check_output(["nvidia-smi", "--query-gpu=cuda_version", "--format=csv,noheader"], text=True)
-             # nvidia-smi might output something like "12.1\n"
-             version_str = output.strip().split('.')[0] + output.strip().split('.')[1] if '.' in output else None
-             return version_str # e.g. "121"
-
-        # If nvcc worked, parse its output
-        for line in output.splitlines():
-            if "release" in line:
-                # Example: "Cuda compilation tools, release 12.1, V12.1.105"
-                version_part = line.split("release")[-1].strip() # "12.1, V12.1.105"
-                major_minor = version_part.split(",")[0] # "12.1"
-                return major_minor.replace(".", "") # "121"
-        return None # Should not happen if nvcc output is standard, but safety first
+            # Fallback to nvidia-smi if nvcc not found
+            output = subprocess.check_output(["nvidia-smi", "--query-gpu=cuda_version", "--format=csv,noheader"], text=True)
+            # Output might be "12.1\n"
+            if '.' in output:
+                parts = output.strip().split('.')
+                return parts[0] + parts[1] # "121"
+            return None # Unexpected nvidia-smi output
     except (FileNotFoundError, subprocess.CalledProcessError, Exception) as e:
-        # Catch specific errors if preferred, or general Exception
-        # print(f"CUDA detection failed: {e}", file=sys.stderr) # Optional debug info
+        # print(f"CUDA detection failed: {e}", file=sys.stderr) # Optional debug
         return None
 
 def get_index_url(cuda_version):
-    # Map versions to known PyTorch wheel indices
-    # Check PyTorch website for currently supported CUDA versions for wheels
-    if cuda_version == "121": # Common stable version
+    print(f"Determining PyTorch index for detected CUDA version: {cuda_version}")
+    # Prioritize official stable wheels from pytorch.org/get-started/locally/
+    if cuda_version and int(cuda_version) >= 121:
+        # Map CUDA 12.1 and newer to the official stable cu121 wheel index
+        # PyTorch doesn't provide wheels for every minor CUDA version (like 12.8)
+        # The cu121 wheels are generally compatible with newer CUDA toolkits/drivers.
+        print("Mapping to stable PyTorch cu121 index.")
         return "https://download.pytorch.org/whl/cu121"
-    elif cuda_version == "118": # Older stable version
+    elif cuda_version == "118":
+        print("Mapping to stable PyTorch cu118 index.")
         return "https://download.pytorch.org/whl/cu118"
-    # Add other versions as needed, e.g., PyTorch might add 12.4 wheels later
-    # elif cuda_version == "124":
-    #     return "https://download.pytorch.org/whl/cu124" # Example, check if exists
-    elif cuda_version and int(cuda_version) >= 125: # Heuristic for future/nightly?
-        # Decide if you want to point bleeding edge CUDA to nightly or a specific recent build
-        print(f"Detected CUDA {cuda_version}. Attempting nightly build (may be unstable).")
-        return "https://download.pytorch.org/whl/nightly/cu121" # Often nightly is built against a specific recent CUDA like 12.1 or newer
-        # Or maybe point to the latest known stable wheel instead? Depends on goal.
-        # return "https://download.pytorch.org/whl/cu121" # Safer fallback
-    else: # No CUDA detected or version not specifically handled
+    else:
+        # No CUDA detected or older/unsupported version
         if cuda_version:
-             print(f"CUDA version {cuda_version} detected, but no specific PyTorch wheel URL found. Falling back to CPU.", file=sys.stderr)
-        return "https://download.pytorch.org/whl/cpu"  # CPU fallback
+             print(f"CUDA version {cuda_version} detected, but no specific stable PyTorch wheel URL found. Falling back to CPU.", file=sys.stderr)
+        else:
+             print("No CUDA detected. Falling back to CPU.")
+        return "https://download.pytorch.org/whl/cpu"
 
 def install_torch(index_url):
     print(f"Attempting to install PyTorch using index: {index_url}")
+    # Keep it simple - install stable torch matching the index.
+    # Remove automatic --pre logic. If user wants pre-release, they need a specific URL/command.
     cmd = [
         "uv", "pip", "install",
-        # Pinning specific versions might be safer in production
         "torch", "torchvision", "torchaudio",
         "--index-url", index_url
     ]
-    # Conditional --pre logic is good, keep it
-    if "nightly" in index_url:
-         print("Adding --pre flag for nightly build.")
-         # Ensure '--pre' is inserted correctly after 'install'
-         cmd.insert(cmd.index("install") + 1, "--pre")
 
-    print(f"Running command: {' '.join(cmd)}") # Show the command being run
+    print(f"Running command: {' '.join(cmd)}")
     try:
-        subprocess.run(cmd, check=True, text=True, capture_output=True) # Capture output for better debugging
-        print("PyTorch installation seems successful.")
+        # Capture output for debugging
+        result = subprocess.run(cmd, check=True, text=True, capture_output=True, encoding='utf-8')
+        print("--- UV Install Output ---")
+        print(result.stdout)
+        if result.stderr:
+             print("--- UV Install Error Output (might be warnings) ---", file=sys.stderr)
+             print(result.stderr, file=sys.stderr)
+        print("-------------------------")
+        print("PyTorch installation command finished.")
     except subprocess.CalledProcessError as e:
         print("--- UV Install Failed ---", file=sys.stderr)
         print(f"Command: {' '.join(e.cmd)}", file=sys.stderr)
@@ -84,7 +83,9 @@ def install_torch(index_url):
         print(e.stderr, file=sys.stderr)
         print("-------------------------", file=sys.stderr)
         print("PyTorch installation failed. Check the errors above.", file=sys.stderr)
-        sys.exit(1) # Exit with error code if install fails
+        # Decide if failure should stop the whole script
+        # sys.exit(1) # Optional: uncomment to make the launcher fail here
+        print("Continuing despite PyTorch install failure (if possible)...", file=sys.stderr)
 
 
 if __name__ == "__main__":
@@ -97,11 +98,10 @@ if __name__ == "__main__":
         target_url = get_index_url(cuda_version_detected)
         print(f"[Dry Run] Would target index URL: {target_url}")
         print("[Dry Run] Skipping actual PyTorch installation.")
-        sys.exit(0) # Successful exit for dry run
+        sys.exit(0)
 
     # --- Actual Installation ---
     cuda = detect_cuda_version()
-    print("Detected CUDA:", cuda if cuda else "not found (CPU fallback)")
     index = get_index_url(cuda)
     install_torch(index)
-    print("PyTorch setup complete.")
+    print("PyTorch setup attempt complete.") # Changed wording slightly

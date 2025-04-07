@@ -83,3 +83,5 @@ Desktop.ini
 # Test files
 test_*.py
 *_test.py
+test_*.*
+*_test.bat
