@@ -1,11 +1,12 @@
 # gui_app.py
 # ---------------------
-# This is the main application window class for UV-App-Starter-Pack.
-# You can customize this file to build any GUI app (TTS, ASR, etc.).
+# UV-App GUI Core
+# You've reached the guts of the GUI. This file actually does stuff.
+# Customize it to build your app — or stare at it and pretend you're busy.
 # ---------------------
 
 from PySide6.QtWidgets import QMainWindow, QLabel, QWidget, QVBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 
 class UVAppWindow(QMainWindow):
     def __init__(self):
@@ -13,14 +14,36 @@ class UVAppWindow(QMainWindow):
         self.setWindowTitle("UV App Starter")
         self.setMinimumSize(600, 400)
 
-        central_widget = QWidget() # Create a central widget
+        central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        layout = QVBoxLayout(central_widget) # Create a layout
+        self.layout = QVBoxLayout(central_widget)
 
-        label = QLabel("🧱 This is your UV App Starter GUI window.", self)
-        label.setAlignment(Qt.AlignCenter)
+        # Fake loading label
+        self.status_label = QLabel("Booting up core modules...", self)
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.status_label)
 
-        layout.addWidget(label) # Add the label to the layout
+        # Fake loading lines
+        self.loading_messages = [
+            "Initializing Entropy Matrix...",
+            "Calibrating Quantum Pipelines...",
+            "Bootstrapping AI Consciousness...",
+            "Linking Neural Uplink...",
+            "Compiling Sentient Widgets...",
+            "Hacking the Mainframe (just kidding)...",
+            "Downloading more RAM...",
+            "Engaging Anti-Bug Protocols...",
+            "Synthesizing Pure Vibes...",
+        ]
+        self.current_index = 0
 
-        # TODO: Add more components to the 'layout'
+        # Rotate messages every 2 seconds
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_loading_message)
+        self.timer.start(2000)
+
+    def update_loading_message(self):
+        self.status_label.setText(self.loading_messages[self.current_index])
+        self.current_index = (self.current_index + 1) % len(self.loading_messages)
+
